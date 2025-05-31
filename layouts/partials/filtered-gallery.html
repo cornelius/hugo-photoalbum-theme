@@ -46,7 +46,7 @@
         }}
       {{ end }}
     {{ end }}
-    {{ range sort $images (.Params.sort_by | default "Name") (.Params.sort_order | default "asc") }}
+    {{ range sort $images (.Params.sort_by | default "Date") (.Params.sort_order | default "asc") }}
       {{ $image := .image }}
       {{ $thumbnail := $image.Filter (slice images.AutoOrient (images.Process "fit 600x600")) }}
       {{ $full := $image.Filter (slice images.AutoOrient (images.Process "fit 1600x1600")) }}
