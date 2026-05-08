@@ -1,21 +1,43 @@
 {{/*
   Override of nicokaiser/hugo-theme-gallery's get-gallery.html.
 
-  For filtered pages (`type: filtered`), the page's own bundle holds only
-  the cover image, so the upstream count of `len $images` reports "1 photo"
-  on every tag-album card. Replace that count — both for the page itself
-  and inside the parent-section aggregation — with the number of images
-  that actually match the filter.
+  Two changes from upstream:
+
+  1. For filtered pages (`type: filtered`), the page's own bundle holds at
+     most a cover image, so the upstream count of `len $images` reports
+     "1 photo" on every tag-album card. Replace the count — both for the
+     page itself and inside the parent-section aggregation — with the
+     number of images that actually match the filter.
+
+  2. A tag-filtered page without any bundle resources (no manual cover)
+     used to fall through and render no card on its parent section. Fall
+     back to the first matching photo (via the cached inverted index) as
+     the thumbnail so the card still appears. Date-only filters without
+     a cover are not auto-thumbnailed — the first-matching image would
+     ignore the date range and could be misleading.
 */}}
 {{ $gallery := "" }}
 {{ $images :=  where (.Resources.ByType "image") "Params.hidden" "ne" true }}
+
+{{ $featured := "" }}
 {{ if gt (len $images) 0 }}
   {{ $covers := where (.Resources.ByType "image") "Params.cover" "eq" true }}
   {{ $cover := "" }}
   {{ if ge (len $covers) 0 }}
     {{ $cover = index $covers 0 }}
   {{ end }}
-  {{ $featured := $cover | default ((.Resources.ByType "image").GetMatch (.Params.featured_image | default "*feature*")) | default (index $images 0) }}
+  {{ $featured = $cover | default ((.Resources.ByType "image").GetMatch (.Params.featured_image | default "*feature*")) | default (index $images 0) }}
+{{ else if eq .Type "filtered" }}
+  {{ with .Params.filter.tag }}
+    {{ $tagIndex := partialCached "tag-index.html" $ }}
+    {{ $candidates := $tagIndex.Get . | default slice }}
+    {{ if gt (len $candidates) 0 }}
+      {{ $featured = index $candidates 0 }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+{{ if $featured }}
   {{ $thumbnail := $featured.Filter (slice images.AutoOrient (images.Process "fit 600x600")) }}
   {{ $color := index $thumbnail.Colors 0 | default "transparent" }}
   {{ $imageCount := 0 }}
