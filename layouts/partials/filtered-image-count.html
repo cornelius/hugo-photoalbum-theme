@@ -1,0 +1,37 @@
+{{/*
+  Returns the number of images matching a filtered page's filter.
+  Used by get-gallery.html for both the page's own count and for
+  parent-section aggregation. Argument: the filtered page (`.`).
+*/}}
+{{ $count := 0 }}
+{{ $filter := .Params.filter }}
+{{ $candidates := slice }}
+{{ with $filter.tag }}
+  {{ $tagIndex := partialCached "tag-index.html" $ }}
+  {{ $candidates = $tagIndex.Get . | default slice }}
+{{ else }}
+  {{ range $page := .Site.RegularPages }}
+    {{ range $image := $page.Resources.ByType "image" }}
+      {{ $candidates = $candidates | append $image }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ $hasDateFilter := or $filter.start_date $filter.end_date }}
+{{ if $hasDateFilter }}
+  {{ range $image := $candidates }}
+    {{ $date := "" }}
+    {{ with $image.Exif }}{{ $date = .Date }}{{ end }}
+    {{ with $filter.start_date }}
+      {{ $start_date := time.AsTime . }}
+      {{ if or (eq $date "") ($date.Before $start_date) }}{{ continue }}{{ end }}
+    {{ end }}
+    {{ with $filter.end_date }}
+      {{ $end_date := time.AsTime . }}
+      {{ if or (eq $date "") ($date.After $end_date) }}{{ continue }}{{ end }}
+    {{ end }}
+    {{ $count = add $count 1 }}
+  {{ end }}
+{{ else }}
+  {{ $count = len $candidates }}
+{{ end }}
+{{ return $count }}
