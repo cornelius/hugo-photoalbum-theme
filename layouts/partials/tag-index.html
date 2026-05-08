@@ -1,0 +1,16 @@
+{{/*
+  Build an inverted index from tag → []image resource by walking every page's
+  image resources once. Returned as a Scratch so callers retrieve a tag's
+  images with `.Get "TagName"`. Intended to be invoked via `partialCached` so
+  the walk runs exactly once per build, no matter how many filtered pages
+  consume it.
+*/}}
+{{ $scratch := newScratch }}
+{{ range $page := .Site.RegularPages }}
+  {{ range $image := $page.Resources.ByType "image" }}
+    {{ range $tag := $image.Params.tags }}
+      {{ $scratch.Add $tag (slice $image) }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ return $scratch }}
