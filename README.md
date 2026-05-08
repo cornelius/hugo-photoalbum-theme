@@ -98,18 +98,13 @@ All under `params:` in the page's front matter.
 | `sort_by` | `Name` \| `Date` | Sort key. See defaults below. |
 | `sort_order` | `asc` \| `desc` | Sort direction. Default `asc`. |
 
-### Sort defaults and EXIF cost
+### Sort defaults
 
 `sort_by` defaults to **`Date`** when a date filter is set, **`Name`** otherwise.
 
-This matters at scale. Sorting by `Date` forces the renderer to read EXIF
-metadata for every candidate image. Sorting by `Name` reads no EXIF at all. On
-a large site with many tag pages, the difference is significant — so the
-default is to skip EXIF for tag-only pages.
-
 If your filenames already encode dates (e.g. `19961216-IMG-14719.jpg`), `Name`
-sort produces the same chronological order as `Date` for free. If they don't,
-add `sort_by: Date` explicitly on the page to opt back in:
+sort produces the same chronological order as `Date` for free. To force EXIF-date
+sort on a tag-only page:
 
 ```yaml
 params:
@@ -137,10 +132,18 @@ the source-album HTML and the tag-album HTML; the hashes should match.
 ## Layouts provided
 
 - `layouts/filtered/single.html` — page layout for `type: filtered` pages.
-- `layouts/partials/filtered-gallery.html` — the gallery itself; can be called
+- `layouts/partials/filtered-gallery.html` — the filtered gallery; can be called
   from any layout via `{{ partial "filtered-gallery.html" . }}` if you want to
   embed a filtered gallery inside another page type.
+- `layouts/partials/gallery.html` — override of the upstream regular gallery,
+  identical except for a richer PhotoSwipe lightbox caption (title · date · tags)
+  in place of the alt-text fallback.
+- `layouts/partials/get-gallery.html` — override of the upstream gallery
+  metadata partial; counts actual matching images for filtered sub-pages so
+  cards render the right `N photos in M albums`.
+- `layouts/partials/filtered-image-count.html` — internal helper used by
+  `get-gallery.html`; shares the cached tag-index when a tag filter is set.
 - `layouts/partials/tag-index.html` — internal; called via `partialCached`.
 
-Everything else (header, navigation, page chrome, the regular non-filtered
-gallery used for year/album pages) comes from `nicokaiser/hugo-theme-gallery`.
+Everything else (header, navigation, page chrome) comes from
+`nicokaiser/hugo-theme-gallery`.
