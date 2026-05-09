@@ -20,8 +20,8 @@
 {{ if $hasDateFilter }}
   {{ range $image := $candidates }}
     {{ $date := "" }}
-    {{ with $image.Exif }}
-      {{ if not .Date.IsZero }}{{ $date = .Date }}{{ end }}
+    {{ if not $image.Meta.Date.IsZero }}
+      {{ $date = $image.Meta.Date }}
     {{ end }}
     {{ if $image.Params.Date }}
       {{ $date = time $image.Params.Date }}

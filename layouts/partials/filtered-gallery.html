@@ -21,17 +21,15 @@
     {{ range $image := $candidates }}
       {{ $title := "" }}
       {{ $date := "" }}
-      {{ with $image.Exif }}
-        {{ if not .Date.IsZero }}
-          {{ $date = .Date }}
-        {{ end }}
-        {{ with .Tags.ImageDescription }}
-          {{/* Title from EXIF ImageDescription */}}
-          {{ $title = . }}
-        {{ end }}
+      {{ if not $image.Meta.Date.IsZero }}
+        {{ $date = $image.Meta.Date }}
+      {{ end }}
+      {{ with $image.Meta.Exif.ImageDescription }}
+        {{/* Title from EXIF ImageDescription */}}
+        {{ $title = . }}
       {{ end }}
       {{ if $image.Params.Date }}
-        {{/* Date from front matter wins over EXIF — Go's strict EXIF parser silently fails on some files where the date is otherwise reliable. */}}
+        {{/* Front-matter date overrides EXIF — defensive fallback for files Hugo can't read. */}}
         {{ $date = time $image.Params.Date }}
       {{ end }}
       {{ if ne $image.Title $image.Name }}
