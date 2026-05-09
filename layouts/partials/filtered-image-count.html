@@ -20,7 +20,12 @@
 {{ if $hasDateFilter }}
   {{ range $image := $candidates }}
     {{ $date := "" }}
-    {{ with $image.Exif }}{{ $date = .Date }}{{ end }}
+    {{ with $image.Exif }}
+      {{ if not .Date.IsZero }}{{ $date = .Date }}{{ end }}
+    {{ end }}
+    {{ if $image.Params.Date }}
+      {{ $date = time $image.Params.Date }}
+    {{ end }}
     {{ with $filter.start_date }}
       {{ $start_date := time.AsTime . }}
       {{ if or (eq $date "") ($date.Before $start_date) }}{{ continue }}{{ end }}
