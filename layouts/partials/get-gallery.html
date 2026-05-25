@@ -20,6 +20,11 @@
      `_index.md`) used to fall through and render no card on the home
      page. Fall back to the first child page's thumbnail so the section
      card still appears.
+
+  4. A filtered page can pick a specific cover image from anywhere in
+     the site via `params.cover_image: <year>/<filename>` — resolved
+     against `/all/<year>` so no file duplication into the bundle is
+     needed. Takes precedence over the tag-index first-match fallback.
 */}}
 {{ $gallery := "" }}
 {{ $images :=  where (.Resources.ByType "image") "Params.hidden" "ne" true }}
@@ -27,7 +32,22 @@
 {{ $thumbnail := "" }}
 {{ $color := "transparent" }}
 
-{{ if gt (len $images) 0 }}
+{{ with .Params.cover_image }}
+  {{ $parts := split . "/" }}
+  {{ if eq (len $parts) 2 }}
+    {{ $year := index $parts 0 }}
+    {{ $name := index $parts 1 }}
+    {{ with site.GetPage (printf "/all/%s" $year) }}
+      {{ with .Resources.GetMatch $name }}
+        {{ $thumbnail = .Filter (slice images.AutoOrient (images.Process "fit 600x600")) }}
+        {{ $color = index $thumbnail.Colors 0 | default "transparent" }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+{{ if $thumbnail }}
+{{ else if gt (len $images) 0 }}
   {{ $covers := where (.Resources.ByType "image") "Params.cover" "eq" true }}
   {{ $cover := "" }}
   {{ if ge (len $covers) 0 }}
